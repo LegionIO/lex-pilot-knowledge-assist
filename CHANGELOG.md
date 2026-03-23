@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2] - 2026-03-23
+
+### Changed
+- Derive confidence from actual Apollo entry scores (max of returned confidence values) instead of hardcoded 0.8/0.3
+- Added `derive_confidence` helper: returns max score when entries have confidence, 0.6 fallback for entries without scores, 0.3 for empty context
+
 ## [0.1.1] - 2026-03-22
 
 ### Changed

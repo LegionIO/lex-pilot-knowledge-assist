@@ -13,11 +13,20 @@ module Legion
               question: question,
               answer: answer,
               sources: context.map { |c| c[:id] },
-              confidence: context.any? ? 0.8 : 0.3
+              confidence: derive_confidence(context)
             }
           end
 
           private
+
+          def derive_confidence(context)
+            return 0.3 if context.empty?
+
+            scores = context.filter_map { |c| c[:confidence] }
+            return 0.6 if scores.empty?
+
+            scores.max.clamp(0.1, 1.0)
+          end
 
           def retrieve_context(question, agent_id)
             return [] unless defined?(Legion::Extensions::Apollo::Client)

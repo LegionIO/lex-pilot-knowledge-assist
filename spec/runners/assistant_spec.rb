@@ -29,11 +29,11 @@ RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant do
       end
     end
 
-    context 'when context is found from Apollo' do
+    context 'when context is found from Apollo with confidence scores' do
       let(:context_entries) do
         [
-          { id: 1, content: 'Legion is an async job engine' },
-          { id: 7, content: 'Legion uses RabbitMQ for messaging' }
+          { id: 1, content: 'Legion is an async job engine', confidence: 0.9 },
+          { id: 7, content: 'Legion uses RabbitMQ for messaging', confidence: 0.7 }
         ]
       end
 
@@ -42,9 +42,9 @@ RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant do
         allow(assistant).to receive(:generate_answer).and_return('Legion is an async job engine using RabbitMQ')
       end
 
-      it 'reports higher confidence with context' do
+      it 'derives confidence from max Apollo entry score' do
         result = assistant.answer_question(question: 'What is Legion?')
-        expect(result[:confidence]).to eq(0.8)
+        expect(result[:confidence]).to eq(0.9)
       end
 
       it 'includes source ids' do
@@ -58,7 +58,7 @@ RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant do
       end
     end
 
-    context 'with single context entry' do
+    context 'when context entries lack confidence scores' do
       before do
         allow(assistant).to receive(:retrieve_context).and_return(
           [{ id: 42, content: 'Extensions are gems named lex-*' }]
@@ -66,9 +66,9 @@ RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant do
         allow(assistant).to receive(:generate_answer).and_return('Extensions are lex-* gems')
       end
 
-      it 'returns confidence 0.8 even for single source' do
+      it 'returns fallback confidence of 0.6' do
         result = assistant.answer_question(question: 'What are extensions?')
-        expect(result[:confidence]).to eq(0.8)
+        expect(result[:confidence]).to eq(0.6)
       end
 
       it 'includes the single source id' do
