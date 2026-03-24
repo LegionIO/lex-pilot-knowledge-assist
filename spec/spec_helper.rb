@@ -34,6 +34,10 @@ module Legion
       class Once
         include Helpers::Lex
       end
+
+      class Subscription
+        include Helpers::Lex
+      end
     end
   end
 end

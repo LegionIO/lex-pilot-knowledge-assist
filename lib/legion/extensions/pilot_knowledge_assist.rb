@@ -5,6 +5,10 @@ require_relative 'pilot_knowledge_assist/runners/classifier'
 require_relative 'pilot_knowledge_assist/runners/assistant'
 require_relative 'pilot_knowledge_assist/runners/feedback'
 
+if defined?(Legion::Extensions::Actors::Subscription)
+  require_relative 'pilot_knowledge_assist/actors/question_subscriber'
+end
+
 module Legion
   module Extensions
     module PilotKnowledgeAssist
