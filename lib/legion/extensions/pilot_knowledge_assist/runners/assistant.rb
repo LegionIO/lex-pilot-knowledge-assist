@@ -10,22 +10,16 @@ module Legion
           DISCLAIMER_THRESHOLD = 0.5
           ESCALATION_THRESHOLD = 0.2
           DISCLAIMER_PREFIX = "I'm not fully certain about this answer -- please verify:\n\n"
+          INTENT_ANSWERS = {
+            greeting: 'Hello! I can help with Grid documentation and support questions.',
+            out_of_scope: 'I can only help with Grid infrastructure and documentation questions.',
+            ops_request: 'I can answer documentation questions but cannot perform operations. ' \
+                         'Please contact the Grid team.'
+          }.freeze
 
           def answer_question(question:, agent_id: 'knowledge-assist')
-            classification = classify_intent(message: question)
-
-            case classification[:intent]
-            when :greeting
-              return { question: question, answer: 'Hello! I can help with Grid documentation and support questions.',
-                       intent: :greeting, confidence: 1.0, sources: [], flagged: false, escalated: false }
-            when :out_of_scope
-              return { question: question, answer: 'I can only help with Grid infrastructure and documentation questions.',
-                       intent: :out_of_scope, confidence: 1.0, sources: [], flagged: false, escalated: false }
-            when :ops_request
-              return { question: question,
-                       answer: 'I can answer documentation questions but cannot perform operations. Please contact the Grid team.',
-                       intent: :ops_request, confidence: 1.0, sources: [], flagged: false, escalated: false }
-            end
+            intent_response = classify_and_route(question: question)
+            return intent_response if intent_response
 
             context_entries = retrieve_context(question: question, agent_id: agent_id)
             confidence = derive_confidence(context_entries)
@@ -45,6 +39,16 @@ module Legion
           end
 
           private
+
+          def classify_and_route(question:)
+            classification = classify_intent(message: question)
+            intent = classification[:intent]
+            answer = INTENT_ANSWERS[intent]
+            return unless answer
+
+            { question: question, answer: answer, intent: intent,
+              confidence: 1.0, sources: [], flagged: false, escalated: false }
+          end
 
           def derive_confidence(context)
             return 0.3 if context.empty?

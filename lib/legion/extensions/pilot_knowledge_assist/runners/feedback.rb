@@ -42,7 +42,7 @@ module Legion
               content: "Q: #{question}\nA: #{answer}",
               content_type: 'qa_pair',
               confidence: 0.5,
-              tags: ['knowledge_assist', 'qa_pair']
+              tags: %w[knowledge_assist qa_pair]
             )
           rescue StandardError
             nil

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0] - 2026-03-24
+
+### Added
+- Intent classifier runner (doc_question, ops_request, greeting, out_of_scope)
+- Low-confidence disclaimer (< 0.5) and escalation to Slack (< 0.2)
+- Feedback runner with rating tracking and Apollo Q&A storage
+- QuestionSubscriber actor for AMQP-driven question handling
+- Intent gating in answer pipeline — non-doc intents short-circuit
+
 ## [0.1.3] - 2026-03-23
 
 ### Changed
