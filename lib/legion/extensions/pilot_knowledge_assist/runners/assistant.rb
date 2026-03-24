@@ -5,16 +5,26 @@ module Legion
     module PilotKnowledgeAssist
       module Runners
         module Assistant
-          def answer_question(question:, agent_id: 'knowledge-assist')
-            context = retrieve_context(question, agent_id)
-            answer = generate_answer(question, context)
+          DISCLAIMER_THRESHOLD = 0.5
+          ESCALATION_THRESHOLD = 0.2
+          DISCLAIMER_PREFIX = "I'm not fully certain about this answer -- please verify:\n\n"
 
-            {
-              question: question,
-              answer: answer,
-              sources: context.map { |c| c[:id] },
-              confidence: derive_confidence(context)
-            }
+          def answer_question(question:, agent_id: 'knowledge-assist')
+            context_entries = retrieve_context(question: question, agent_id: agent_id)
+            confidence = derive_confidence(context_entries)
+
+            if confidence < ESCALATION_THRESHOLD
+              escalate(question: question, confidence: confidence)
+              return { question: question, answer: 'This question has been escalated to the support team.',
+                       sources: [], confidence: confidence, escalated: true, flagged: true }
+            end
+
+            answer = generate_answer(question: question, context: context_entries)
+            flagged = confidence < DISCLAIMER_THRESHOLD
+            final_answer = flagged ? "#{DISCLAIMER_PREFIX}#{answer}" : answer
+
+            { question: question, answer: final_answer, sources: context_entries.map { |e| e[:id] },
+              confidence: confidence, flagged: flagged, escalated: false }
           end
 
           private
@@ -28,7 +38,7 @@ module Legion
             scores.max.clamp(0.1, 1.0)
           end
 
-          def retrieve_context(question, agent_id)
+          def retrieve_context(question:, agent_id:)
             return [] unless defined?(Legion::Extensions::Apollo::Client)
 
             client = Legion::Extensions::Apollo::Client.new(agent_id: agent_id)
@@ -37,7 +47,7 @@ module Legion
             []
           end
 
-          def generate_answer(question, context)
+          def generate_answer(question:, context:)
             return 'LLM unavailable' unless defined?(Legion::LLM)
 
             context_text = context.map { |c| c[:content] }.join("\n\n")
@@ -48,9 +58,28 @@ module Legion
                      end
 
             result = Legion::LLM.chat(message: prompt, caller: { extension: 'lex-pilot-knowledge-assist' })
-            result[:content]
+            result.is_a?(Hash) ? result[:content] : result.to_s
           rescue StandardError => e
             "Error: #{e.message}"
+          end
+
+          def escalate(question:, confidence:)
+            return unless defined?(Legion::Extensions::Slack::Client)
+
+            webhook = escalation_webhook
+            return unless webhook
+
+            message = "Knowledge assist escalation:\n*Question:* #{question}\n*Confidence:* #{confidence}"
+            Legion::Extensions::Slack::Client.new.send_webhook(message: message, webhook: webhook)
+          rescue StandardError => e
+            Legion::Logging::Logger.warn("Escalation failed: #{e.message}") if defined?(Legion::Logging)
+          end
+
+          def escalation_webhook
+            return nil unless defined?(Legion::Settings)
+
+            config = Legion::Settings[:pilot_knowledge_assist] || {}
+            config[:escalation_webhook]
           end
         end
       end

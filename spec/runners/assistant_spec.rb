@@ -4,6 +4,7 @@ require 'spec_helper'
 
 RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant do
   let(:assistant) { Class.new { include Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant }.new }
+  subject { assistant }
 
   describe '#answer_question' do
     context 'when no context is found' do
@@ -15,7 +16,7 @@ RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant do
       it 'returns answer structure with question echoed back' do
         result = assistant.answer_question(question: 'What is Legion?')
         expect(result[:question]).to eq('What is Legion?')
-        expect(result[:answer]).to eq('general answer')
+        expect(result[:answer]).to include('general answer')
       end
 
       it 'reports low confidence' do
@@ -86,6 +87,40 @@ RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant do
       it 'passes agent_id through and returns result' do
         result = assistant.answer_question(question: 'test', agent_id: 'custom-agent')
         expect(result[:question]).to eq('test')
+      end
+    end
+
+    context 'when confidence is below 0.5' do
+      before do
+        stub_const('Legion::LLM', double('LLM', started?: false))
+        allow(subject).to receive(:retrieve_context).and_return(
+          [{ id: '1', content: 'some text', confidence: 0.4 }]
+        )
+        allow(subject).to receive(:generate_answer).and_return('Some answer')
+      end
+
+      it 'prepends a disclaimer to the answer' do
+        result = subject.answer_question(question: 'unclear topic')
+        expect(result[:answer]).to start_with("I'm not fully certain")
+      end
+
+      it 'marks the answer as flagged' do
+        result = subject.answer_question(question: 'unclear topic')
+        expect(result[:flagged]).to be true
+      end
+    end
+
+    context 'when confidence is below 0.2' do
+      before do
+        stub_const('Legion::LLM', double('LLM', started?: false))
+        allow(subject).to receive(:retrieve_context).and_return([])
+        allow(subject).to receive(:derive_confidence).and_return(0.1)
+      end
+
+      it 'returns an escalation result instead of an answer' do
+        result = subject.answer_question(question: 'totally unknown topic')
+        expect(result[:escalated]).to be true
+        expect(result[:answer]).to include('escalated')
       end
     end
   end
