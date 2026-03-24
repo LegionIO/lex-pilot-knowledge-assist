@@ -123,5 +123,30 @@ RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant do
         expect(result[:answer]).to include('escalated')
       end
     end
+
+    context 'when intent is greeting' do
+      before do
+        stub_const('Legion::LLM', double('LLM', started?: true))
+        allow(Legion::LLM).to receive(:chat).and_return('greeting')
+      end
+
+      it 'returns a greeting response without hitting Apollo' do
+        result = subject.answer_question(question: 'Hello!')
+        expect(result[:intent]).to eq(:greeting)
+        expect(result[:answer]).to include('help')
+      end
+    end
+
+    context 'when intent is out_of_scope' do
+      before do
+        stub_const('Legion::LLM', double('LLM', started?: true))
+        allow(Legion::LLM).to receive(:chat).and_return('out_of_scope')
+      end
+
+      it 'returns an out-of-scope response' do
+        result = subject.answer_question(question: 'What is the weather?')
+        expect(result[:intent]).to eq(:out_of_scope)
+      end
+    end
   end
 end

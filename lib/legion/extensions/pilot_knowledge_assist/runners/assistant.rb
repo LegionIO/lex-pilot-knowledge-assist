@@ -5,11 +5,28 @@ module Legion
     module PilotKnowledgeAssist
       module Runners
         module Assistant
+          include Classifier
+
           DISCLAIMER_THRESHOLD = 0.5
           ESCALATION_THRESHOLD = 0.2
           DISCLAIMER_PREFIX = "I'm not fully certain about this answer -- please verify:\n\n"
 
           def answer_question(question:, agent_id: 'knowledge-assist')
+            classification = classify_intent(message: question)
+
+            case classification[:intent]
+            when :greeting
+              return { question: question, answer: 'Hello! I can help with Grid documentation and support questions.',
+                       intent: :greeting, confidence: 1.0, sources: [], flagged: false, escalated: false }
+            when :out_of_scope
+              return { question: question, answer: 'I can only help with Grid infrastructure and documentation questions.',
+                       intent: :out_of_scope, confidence: 1.0, sources: [], flagged: false, escalated: false }
+            when :ops_request
+              return { question: question,
+                       answer: 'I can answer documentation questions but cannot perform operations. Please contact the Grid team.',
+                       intent: :ops_request, confidence: 1.0, sources: [], flagged: false, escalated: false }
+            end
+
             context_entries = retrieve_context(question: question, agent_id: agent_id)
             confidence = derive_confidence(context_entries)
 
