@@ -47,7 +47,7 @@ module Legion
                        "Context:\n#{context_text}\n\nQuestion: #{question}"
                      end
 
-            result = Legion::LLM.chat(message: prompt)
+            result = Legion::LLM.chat(message: prompt, caller: { extension: 'lex-pilot-knowledge-assist' })
             result[:content]
           rescue StandardError => e
             "Error: #{e.message}"
