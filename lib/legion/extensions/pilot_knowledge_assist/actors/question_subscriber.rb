@@ -3,7 +3,7 @@
 module Legion
   module Extensions
     module PilotKnowledgeAssist
-      module Actors
+      module Actor
         class QuestionSubscriber < Legion::Extensions::Actors::Subscription
           def runner_class
             'Legion::Extensions::PilotKnowledgeAssist::Runners::Assistant'

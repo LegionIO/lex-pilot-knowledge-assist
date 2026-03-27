@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Actors::QuestionSubscriber do
+RSpec.describe Legion::Extensions::PilotKnowledgeAssist::Actor::QuestionSubscriber do
   describe 'actor configuration' do
     it 'uses the correct runner class' do
       expect(described_class.new.runner_class).to eq(

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] - 2026-03-27
+
+### Fixed
+- QuestionSubscriber actor: `module Actors` → `module Actor` to match framework convention
+
 ## [0.2.0] - 2026-03-24
 
 ### Added
