@@ -11,7 +11,7 @@ RAG-based knowledge assistant pilot extension for LegionIO. Answers natural lang
 ## Gem Info
 
 - **Gem name**: `lex-pilot-knowledge-assist`
-- **Version**: `0.1.0`
+- **Version**: `0.2.0`
 - **Module**: `Legion::Extensions::PilotKnowledgeAssist`
 - **Ruby**: `>= 3.4`
 - **License**: MIT
