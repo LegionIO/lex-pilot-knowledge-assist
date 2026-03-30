@@ -39,12 +39,12 @@ module Legion
             return unless defined?(Legion::Extensions::Apollo::Client)
 
             Legion::Extensions::Apollo::Client.new.handle_ingest(
-              content: "Q: #{question}\nA: #{answer}",
+              content:      "Q: #{question}\nA: #{answer}",
               content_type: 'qa_pair',
-              confidence: 0.5,
-              tags: %w[knowledge_assist qa_pair]
+              confidence:   0.5,
+              tags:         %w[knowledge_assist qa_pair]
             )
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
         end

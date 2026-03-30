@@ -11,10 +11,10 @@ module Legion
           ESCALATION_THRESHOLD = 0.2
           DISCLAIMER_PREFIX = "I'm not fully certain about this answer -- please verify:\n\n"
           INTENT_ANSWERS = {
-            greeting: 'Hello! I can help with Grid documentation and support questions.',
+            greeting:     'Hello! I can help with Grid documentation and support questions.',
             out_of_scope: 'I can only help with Grid infrastructure and documentation questions.',
-            ops_request: 'I can answer documentation questions but cannot perform operations. ' \
-                         'Please contact the Grid team.'
+            ops_request:  'I can answer documentation questions but cannot perform operations. ' \
+                          'Please contact the Grid team.'
           }.freeze
 
           def answer_question(question:, agent_id: 'knowledge-assist')
@@ -64,7 +64,7 @@ module Legion
 
             client = Legion::Extensions::Apollo::Client.new(agent_id: agent_id)
             client.query_knowledge(query: question, limit: 5)
-          rescue StandardError
+          rescue StandardError => _e
             []
           end
 
@@ -78,7 +78,7 @@ module Legion
                        "Context:\n#{context_text}\n\nQuestion: #{question}"
                      end
 
-            result = Legion::LLM.chat(message: prompt, caller: { extension: 'lex-pilot-knowledge-assist' })
+            result = Legion::LLM.chat(message: prompt, caller: { extension: 'lex-pilot-knowledge-assist' }) # rubocop:disable Legion/HelperMigration/DirectLlm
             result.is_a?(Hash) ? result[:content] : result.to_s
           rescue StandardError => e
             "Error: #{e.message}"
@@ -93,7 +93,7 @@ module Legion
             message = "Knowledge assist escalation:\n*Question:* #{question}\n*Confidence:* #{confidence}"
             Legion::Extensions::Slack::Client.new.send_webhook(message: message, webhook: webhook)
           rescue StandardError => e
-            Legion::Logging::Logger.warn("Escalation failed: #{e.message}") if defined?(Legion::Logging)
+            Legion::Logging.warn("Escalation failed: #{e.message}") # rubocop:disable Legion/HelperMigration/DirectLogging
           end
 
           def escalation_webhook
