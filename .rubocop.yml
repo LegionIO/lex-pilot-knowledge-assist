@@ -1,33 +1,10 @@
-AllCops:
-  NewCops: enable
-  SuggestExtensions: false
-  TargetRubyVersion: 3.4
+inherit_gem:
+  rubocop-legion: config/lex.yml
 
-Style/Documentation:
+# Private helper methods return scalars (confidence, arrays) — not public runner return values
+Legion/Extension/RunnerReturnHash:
   Enabled: false
 
-Metrics/MethodLength:
-  Max: 20
-
-Metrics/AbcSize:
-  Max: 25
-
-Metrics/CyclomaticComplexity:
-  Max: 10
-
-Metrics/PerceivedComplexity:
-  Max: 12
-
-Metrics/BlockLength:
-  Exclude:
-    - 'spec/**/*'
-
-Metrics/ParameterLists:
-  Max: 12
-
-Layout/LineLength:
-  Max: 130
-
-Lint/EmptyClass:
-  Exclude:
-    - 'spec/**/*'
+# Runners use include/mixin pattern — extend self not needed
+Legion/Extension/RunnerIncludeHelpers:
+  Enabled: false

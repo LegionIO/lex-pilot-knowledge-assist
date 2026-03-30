@@ -21,15 +21,14 @@ module Legion
             return { intent: :doc_question, method: :default } unless llm_available?
 
             prompt = format(CLASSIFY_PROMPT, message: message)
-            response = Legion::LLM.chat(
-              message: prompt,
-              caller: { extension: 'lex-pilot-knowledge-assist', function: 'classify_intent' }
-            )
+            response = Legion::LLM.chat(message: prompt, # rubocop:disable Legion/HelperMigration/DirectLlm
+                                        caller:  { extension: 'lex-pilot-knowledge-assist',
+                                                   function:  'classify_intent' })
             intent = response.to_s.strip.downcase.to_sym
             intent = :doc_question unless VALID_INTENTS.include?(intent)
 
             { intent: intent, method: :llm }
-          rescue StandardError
+          rescue StandardError => _e
             { intent: :doc_question, method: :fallback }
           end
 
